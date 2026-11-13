@@ -101,7 +101,7 @@ class PublicNewsController extends Controller
         ]);
     }
 
-    public function show(string $locale, string $slug): View
+    public function show(Request $request, string $locale, string $slug): View
     {
         $translation = PostTranslation::query()
             ->where('locale', $locale)
@@ -116,6 +116,20 @@ class PublicNewsController extends Controller
             ->firstOrFail();
         $post = $translation->post;
         $post->increment('view_count');
+        $comments = $post->comments()
+            ->approved()
+            ->whereNull('parent_id')
+            ->with([
+                'user:id,name',
+                'replies' => function (HasMany $replies): void {
+                    $replies->approved()->with('user:id,name')->oldest();
+                },
+            ])
+            ->oldest()
+            ->paginate(20);
+        $isBookmarked = $request->user()?->bookmarkedPosts()
+            ->whereKey($post->getKey())
+            ->exists() ?? false;
         $relatedPosts = $this->relatedPosts($post, $locale);
         $alternateTranslation = $post->translations->first(
             fn (PostTranslation $candidate): bool => $candidate->locale === $this->otherLocale($locale),
@@ -168,6 +182,8 @@ class PublicNewsController extends Controller
                 : route('site.news.index', ['locale' => $this->otherLocale($locale)]),
             'translation' => $translation,
             'post' => $post,
+            'comments' => $comments,
+            'isBookmarked' => $isBookmarked,
             'relatedPosts' => $relatedPosts,
             'canonicalUrl' => $canonicalUrl,
             'seoTitle' => $translation->meta_title ?: $translation->title,

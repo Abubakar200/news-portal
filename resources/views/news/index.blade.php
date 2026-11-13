@@ -23,7 +23,7 @@
                 @endforeach
             </div>
             <div class="mt-10">
-                {{ $posts->onEachSide(1)->links() }}
+                {{ $posts->onEachSide(1)->links('pagination::tailwind') }}
             </div>
         @else
             <p class="rounded-2xl border border-dashed border-slate-300 px-6 py-12 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">{{ __('No stories found.') }}</p>

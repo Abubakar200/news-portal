@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'author_id',
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Post extends Model
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $attributes = [
         'status' => PostStatus::Draft->value,
@@ -61,6 +62,16 @@ class Post extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class)->withTimestamps();
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function bookmarkedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'bookmarks')->withTimestamps();
     }
 
     #[Scope]

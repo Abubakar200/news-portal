@@ -10,7 +10,7 @@
             @endforeach
         </div>
         <div class="mt-10">
-            {{ $posts->onEachSide(1)->links() }}
+            {{ $posts->onEachSide(1)->links('pagination::tailwind') }}
         </div>
     </div>
 </x-layouts.site>

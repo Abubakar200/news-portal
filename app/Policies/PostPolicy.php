@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Post;
 use App\Models\User;
+
 class PostPolicy
 {
     public function viewAny(User $user): bool
@@ -53,12 +54,13 @@ class PostPolicy
 
     public function restore(User $user, Post $post): bool
     {
-        return false;
+        return $user->can('posts.delete')
+            || ($user->can('posts.delete-own') && $post->author_id === $user->id);
     }
 
     public function restoreAny(User $user): bool
     {
-        return false;
+        return $user->can('posts.delete');
     }
 
     public function publish(User $user, Post $post): bool

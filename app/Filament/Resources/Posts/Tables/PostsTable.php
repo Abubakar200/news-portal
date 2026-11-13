@@ -6,11 +6,14 @@ use App\Enums\PostStatus;
 use App\Models\Post;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\RestoreAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
 class PostsTable
@@ -18,7 +21,9 @@ class PostsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['translations:id,post_id,locale,title']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query
+                ->withoutGlobalScopes([SoftDeletingScope::class])
+                ->with(['translations:id,post_id,locale,title']))
             ->columns([
                 TextColumn::make('admin_title')
                     ->label('Title')
@@ -67,10 +72,12 @@ class PostsTable
                         PostStatus::Scheduled->value => 'Scheduled',
                         PostStatus::Published->value => 'Published',
                     ]),
+                TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->visible(fn (Post $record): bool => ! $record->trashed()),
                 DeleteAction::make(),
+                RestoreAction::make(),
             ]);
     }
 }

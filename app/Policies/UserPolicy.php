@@ -11,9 +11,9 @@ class UserPolicy
         return $user->can('users.manage');
     }
 
-    public function view(User $user, User $author): bool
+    public function view(User $user, User $targetUser): bool
     {
-        return $user->can('users.manage') && $author->hasRole('author');
+        return $user->can('users.manage');
     }
 
     public function create(User $user): bool
@@ -21,22 +21,22 @@ class UserPolicy
         return $user->can('users.manage');
     }
 
-    public function update(User $user, User $author): bool
+    public function update(User $user, User $targetUser): bool
     {
-        return $user->can('users.manage') && $author->hasRole('author');
+        return $user->can('users.manage');
     }
 
-    public function delete(User $user, User $author): bool
+    public function delete(User $user, User $targetUser): bool
     {
-        return false;
+        return $user->can('users.manage') && $user->isNot($targetUser);
     }
 
     public function deleteAny(User $user): bool
     {
-        return false;
+        return $user->can('users.manage');
     }
 
-    public function forceDelete(User $user, User $author): bool
+    public function forceDelete(User $user, User $targetUser): bool
     {
         return false;
     }
@@ -46,13 +46,13 @@ class UserPolicy
         return false;
     }
 
-    public function restore(User $user, User $author): bool
+    public function restore(User $user, User $targetUser): bool
     {
-        return false;
+        return $user->can('users.manage');
     }
 
     public function restoreAny(User $user): bool
     {
-        return false;
+        return $user->can('users.manage');
     }
 }

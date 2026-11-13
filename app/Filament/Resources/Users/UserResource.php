@@ -13,7 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
@@ -21,11 +20,11 @@ class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Content';
+    protected static string|\UnitEnum|null $navigationGroup = 'Community';
 
-    protected static ?string $navigationLabel = 'Authors';
+    protected static ?string $navigationLabel = 'Registered users';
 
-    protected static ?string $pluralModelLabel = 'authors';
+    protected static ?string $pluralModelLabel = 'registered users';
 
     public static function form(Schema $schema): Schema
     {
@@ -40,14 +39,6 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->whereHas('roles', fn (Builder $query): Builder => $query
-                ->where('name', 'author')
-                ->where('guard_name', 'web'));
     }
 
     public static function getPages(): array

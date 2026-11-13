@@ -1,6 +1,6 @@
 @props([
     'locale',
-    'localeSwitchUrl',
+    'localeSwitchUrl' => null,
     'seoTitle' => null,
     'seoDescription' => null,
     'seoImage' => null,
@@ -8,7 +8,10 @@
     'canonicalUrl' => null,
 ])
 
-@php($siteName = config('app.name') === 'Laravel' ? __('News Portal') : config('app.name'))
+@php
+    $siteName = config('app.name') === 'Laravel' ? __('News Portal') : config('app.name');
+    $localeSwitchUrl ??= route('site.home', ['locale' => $locale === 'ur' ? 'en' : 'ur']);
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $locale === 'ur' ? 'rtl' : 'ltr' }}" class="scroll-smooth">
@@ -84,6 +87,27 @@
                 @endforeach
             </div>
         </nav>
+        <div class="border-t border-slate-100 dark:border-slate-800">
+            <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 text-sm sm:px-6 lg:px-8">
+                @auth
+                    <a class="font-semibold hover:text-amber-700 dark:hover:text-amber-300" href="{{ route('profile.edit', ['locale' => $locale]) }}">{{ __('Profile') }}</a>
+                    <a class="font-semibold hover:text-amber-700 dark:hover:text-amber-300" href="{{ route('bookmarks.index', ['locale' => $locale]) }}">{{ __('Bookmarks') }}</a>
+                    <a class="font-semibold hover:text-amber-700 dark:hover:text-amber-300" href="{{ route('notifications.index', ['locale' => $locale]) }}">
+                        {{ __('Notifications') }}
+                        @if ($unreadNotificationCount > 0)
+                            <span class="ms-1 rounded-full bg-amber-400 px-2 py-0.5 text-xs text-slate-950">{{ $unreadNotificationCount }}</span>
+                        @endif
+                    </a>
+                    <form method="POST" action="{{ route('logout', ['locale' => $locale]) }}">
+                        @csrf
+                        <button class="font-semibold text-slate-500 hover:text-amber-700 dark:text-slate-400 dark:hover:text-amber-300" type="submit">{{ __('Sign out') }}</button>
+                    </form>
+                @else
+                    <a class="font-semibold hover:text-amber-700 dark:hover:text-amber-300" href="{{ route('login', ['locale' => $locale]) }}">{{ __('Sign in') }}</a>
+                    <a class="font-semibold hover:text-amber-700 dark:hover:text-amber-300" href="{{ route('register', ['locale' => $locale]) }}">{{ __('Create account') }}</a>
+                @endauth
+            </div>
+        </div>
     </header>
 
     <main>
@@ -95,6 +119,18 @@
             <div>
                 <a class="text-xl font-black tracking-tight" href="{{ route('site.home', ['locale' => $locale]) }}">{{ $siteName }}</a>
                 <p class="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">{{ __('Independent journalism for informed communities.') }}</p>
+                <form class="mt-5 flex max-w-md flex-col gap-2 sm:flex-row" method="POST" action="{{ route('newsletter.store', ['locale' => $locale]) }}">
+                    @csrf
+                    <label class="sr-only" for="newsletter-email">{{ __('Email address') }}</label>
+                    <input id="newsletter-email" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-stone-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" type="email" name="email" value="{{ old('email') }}" placeholder="{{ __('Email address') }}" required maxlength="255">
+                    <button class="rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-300" type="submit">{{ __('Subscribe') }}</button>
+                </form>
+                @if (session('status'))
+                    <p class="mt-2 text-sm text-emerald-700 dark:text-emerald-300" role="status">{{ session('status') }}</p>
+                @endif
+                @error('email')
+                    <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <h2 class="text-sm font-bold">{{ __('All News') }}</h2>

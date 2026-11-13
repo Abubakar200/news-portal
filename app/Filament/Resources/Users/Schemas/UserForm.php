@@ -12,7 +12,7 @@ class UserForm
     {
         return $schema
             ->components([
-                Section::make('Author account')
+                Section::make('User account')
                     ->schema([
                         TextInput::make('name')
                             ->required()

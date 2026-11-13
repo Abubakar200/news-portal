@@ -49,11 +49,11 @@ class CategoryPolicy
 
     public function restore(User $user, Category $category): bool
     {
-        return false;
+        return $user->can('content.manage');
     }
 
     public function restoreAny(User $user): bool
     {
-        return false;
+        return $user->can('content.manage');
     }
 }

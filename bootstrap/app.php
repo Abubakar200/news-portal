@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'news.locale' => SetNewsLocale::class,
         ]);
+        $middleware->redirectGuestsTo(
+            fn (Request $request): string => route('login', [
+                'locale' => $request->route('locale') ?? 'en',
+            ]),
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
