@@ -6,6 +6,7 @@ use App\Enums\PostStatus;
 use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Posts\Pages\CreatePost;
 use App\Filament\Resources\Posts\Pages\EditPost;
+use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Filament\Resources\Tags\Pages\CreateTag;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Models\Category;
@@ -41,6 +42,7 @@ class NewsCmsTest extends TestCase
         $author->assignRole('author');
         $category = Category::factory()->create();
         $tag = Tag::factory()->create();
+        $canonicalUrl = 'https://example.com/'.str_repeat('a', 280);
         $this->actingAs($author);
 
         Livewire::test(CreatePost::class)
@@ -55,11 +57,12 @@ class NewsCmsTest extends TestCase
                         'body' => 'The article body in English.',
                         'meta_title' => 'Community bulletin',
                         'meta_description' => 'Local community news.',
+                        'canonical_url' => $canonicalUrl,
                     ],
                     [
                         'locale' => 'ur',
                         'title' => 'کمیونٹی خبریں',
-                        'slug' => 'community-bulletin-ur',
+                        'slug' => 'community-bulletin',
                         'body' => 'اردو میں مضمون۔',
                     ],
                 ],
@@ -83,7 +86,12 @@ class NewsCmsTest extends TestCase
         $this->assertDatabaseHas('post_translations', [
             'post_id' => $post->id,
             'locale' => 'ur',
-            'slug' => 'community-bulletin-ur',
+            'slug' => 'community-bulletin',
+        ]);
+        $this->assertDatabaseHas('post_translations', [
+            'post_id' => $post->id,
+            'locale' => 'en',
+            'canonical_url' => $canonicalUrl,
         ]);
     }
 
@@ -159,6 +167,8 @@ class NewsCmsTest extends TestCase
         $this->assertFalse(Gate::forUser($author)->allows('update', $otherPost));
         $this->assertFalse(Gate::forUser($author)->allows('delete', $otherPost));
         $this->assertFalse(Gate::forUser($author)->allows('publish', $ownPost));
+        $this->assertFalse(Gate::forUser($author)->allows('create', Category::class));
+        $this->assertFalse(Gate::forUser($author)->allows('create', Tag::class));
     }
 
     public function test_author_cannot_change_article_ownership_status_or_editorial_flags(): void
@@ -208,11 +218,27 @@ class NewsCmsTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_author_article_list_is_scoped_to_their_own_records(): void
+    {
+        $author = User::factory()->create();
+        $author->assignRole('author');
+        $ownPost = Post::factory()->for($author, 'author')->create();
+        $otherPost = Post::factory()->create();
+        $this->actingAs($author);
+
+        Livewire::test(ListPosts::class)
+            ->assertCanSeeTableRecords([$ownPost])
+            ->assertCanNotSeeTableRecords([$otherPost]);
+    }
+
     public function test_editor_can_schedule_an_article_from_the_admin_action(): void
     {
         $editor = User::factory()->create();
         $editor->assignRole('editor');
-        $post = Post::factory()->create();
+        $author = User::factory()->create();
+        $author->assignRole('author');
+        $post = Post::factory()->for($author, 'author')->create();
+        PostTranslation::factory()->for($post)->create();
         $scheduledAt = now()->addDay()->startOfMinute();
         $this->actingAs($editor);
 
@@ -247,7 +273,10 @@ class NewsCmsTest extends TestCase
     {
         $editor = User::factory()->create();
         $editor->assignRole('editor');
-        $post = Post::factory()->create();
+        $author = User::factory()->create();
+        $author->assignRole('author');
+        $post = Post::factory()->for($author, 'author')->create();
+        PostTranslation::factory()->for($post)->create();
         $this->actingAs($editor);
 
         Livewire::test(EditPost::class, ['record' => $post->getRouteKey()])
